@@ -4,7 +4,6 @@ WORKDIR /app
 
 COPY backend/package*.json ./
 
-# Install ALL dependencies (including dev dependencies like nodemon)
 RUN npm ci
 
 COPY backend/ .
