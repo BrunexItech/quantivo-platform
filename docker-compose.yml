@@ -11,6 +11,8 @@ services:
       - MONGODB_URI=mongodb://mongo:27017/quantivo
     env_file:
       - ./backend/.env
+    volumes:
+      - ./backend/uploads:/app/uploads   # <-- ADDED THIS LINE
     depends_on:
       - mongo
     restart: unless-stopped
