@@ -57,6 +57,12 @@ const Tours = () => {
                     alt={tour.title} 
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
+                ) : tour.mediaUrl ? (
+                  <img 
+                    src={tour.mediaUrl} 
+                    alt={tour.title} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                 ) : (
                   <span style={{ fontSize: '4rem' }}>
                     {tour.category === 'wildlife' ? '🦁' : tour.category === 'history' ? '🏛️' : tour.category === 'geography' ? '🏔️' : '🌍'}
