@@ -8,7 +8,7 @@ services:
       - "5002:5000"
     environment:
       - NODE_ENV=production
-      - MONGODB_URI=mongodb://quantivo-vr-mongo:27017/quantivo
+      - MONGODB_URI=mongodb://quantivo-vr-mongo:27018/quantivo
     env_file:
       - ./backend/.env
     volumes:
@@ -34,7 +34,7 @@ services:
     volumes:
       - mongo-data-vr:/data/db
     ports:
-      - "27017:27017"
+      - "27018:27017"
     restart: unless-stopped
 
 volumes:
