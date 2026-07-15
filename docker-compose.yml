@@ -8,13 +8,13 @@ services:
       - "5002:5000"
     environment:
       - NODE_ENV=production
-      - MONGODB_URI=mongodb://mongo:27017/quantivo
+      - MONGODB_URI=mongodb://quantivo-mongo:27017/quantivo
     env_file:
       - ./backend/.env
     volumes:
-      - ./backend/uploads:/app/uploads   # <-- ADDED THIS LINE
+      - ./backend/uploads:/app/uploads
     depends_on:
-      - mongo
+      - quantivo-mongo
     restart: unless-stopped
 
   frontend:
@@ -28,7 +28,7 @@ services:
       - backend
     restart: unless-stopped
 
-  mongo:
+  quantivo-mongo:
     image: mongo:7
     container_name: quantivo-mongo
     volumes:
