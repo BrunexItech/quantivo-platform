@@ -23,4 +23,17 @@ api.interceptors.response.use(
   }
 );
 
+// ===== CHAT API =====
+export const chatAPI = {
+  sendMessage: async (message, history = [], language = 'en') => {
+    try {
+      const response = await api.post('/chat', { message, history, language });
+      return response.data.data.reply;
+    } catch (error) {
+      console.error('Chat API error:', error);
+      throw error;
+    }
+  }
+};
+
 export default api;

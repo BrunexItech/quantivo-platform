@@ -1,12 +1,54 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { useState, useEffect } from 'react';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const { language, setLanguage, translateContent } = useLanguage();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [translatedTexts, setTranslatedTexts] = useState({});
+
+  const texts = {
+    tours: 'Tours',
+    faqs: 'FAQs',
+    creator: 'Creator',
+    admin: 'Admin',
+    dashboard: 'Dashboard',
+    logout: 'Logout',
+    login: 'Login',
+    getStarted: 'Get Started',
+    toursIcon: '🎓 Tours',
+    faqsIcon: '❓ FAQs',
+    creatorDashboard: '🎬 Creator Dashboard',
+    adminIcon: '🛡️ Admin',
+    dashboardIcon: '📊 Dashboard',
+    loginIcon: '🔑 Login',
+    getStartedIcon: 'Get Started',
+    logoutIcon: '🚪 Logout'
+  };
+
+  useEffect(() => {
+    const translateTexts = async () => {
+      if (language === 'en') {
+        setTranslatedTexts(texts);
+        return;
+      }
+
+      const translated = {};
+      for (const [key, value] of Object.entries(texts)) {
+        const result = await translateContent(value);
+        translated[key] = result;
+      }
+      setTranslatedTexts(translated);
+    };
+
+    translateTexts();
+  }, [language]);
+
+  const t = translatedTexts;
 
   useEffect(() => {
     const handleResize = () => {
@@ -24,6 +66,17 @@ const Navbar = () => {
   };
 
   const toggleMenu = () => setIsOpen(!isOpen);
+
+  const languages = [
+    { code: 'en', label: 'English' },
+    { code: 'sw', label: 'Kiswahili' },
+    { code: 'fr', label: 'Français' },
+    { code: 'es', label: 'Español' },
+    { code: 'ja', label: '日本語' },
+    { code: 'zh', label: '中文' },
+    { code: 'de', label: 'Deutsch' },
+    { code: 'ar', label: 'العربية' }
+  ];
 
   return (
     <>
@@ -46,37 +99,44 @@ const Navbar = () => {
         }}>
           {/* Logo */}
           <Link to="/" style={{
-            color: 'white',
-            fontSize: '1.5rem',
-            fontWeight: '800',
-            textDecoration: 'none',
-            letterSpacing: '-0.5px',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem'
+            gap: '0.5rem',
+            textDecoration: 'none'
           }}>
-            <span style={{ fontSize: '1.8rem' }}>🌍</span>
-            Quantivo
+            <img 
+              src="/Quantivo.svg" 
+              alt="Quantivo Logo" 
+              style={{ height: '40px', width: 'auto' }}
+            />
+            <span style={{
+              color: 'white',
+              fontSize: '1.5rem',
+              fontWeight: '800',
+              letterSpacing: '-0.5px'
+            }}>
+              QuantivoVR
+            </span>
           </Link>
 
           {/* Desktop Menu */}
           <div style={{
             display: isMobile ? 'none' : 'flex',
-            gap: '2rem',
+            gap: '1.5rem',
             alignItems: 'center'
           }}>
-            <Link to="/tours" style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: '500', transition: 'color 0.3s', padding: '0.5rem 0', borderBottom: '2px solid transparent' }} onMouseEnter={(e) => e.target.style.color = 'white'} onMouseLeave={(e) => e.target.style.color = 'rgba(255,255,255,0.85)'}>Tours</Link>
-            <Link to="/faqs" style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: '500', transition: 'color 0.3s', padding: '0.5rem 0', borderBottom: '2px solid transparent' }} onMouseEnter={(e) => e.target.style.color = 'white'} onMouseLeave={(e) => e.target.style.color = 'rgba(255,255,255,0.85)'}>FAQs</Link>
+            <Link to="/tours" style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: '500', transition: 'color 0.3s', padding: '0.5rem 0', borderBottom: '2px solid transparent' }} onMouseEnter={(e) => e.target.style.color = 'white'} onMouseLeave={(e) => e.target.style.color = 'rgba(255,255,255,0.85)'}>{t.tours}</Link>
+            <Link to="/faqs" style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: '500', transition: 'color 0.3s', padding: '0.5rem 0', borderBottom: '2px solid transparent' }} onMouseEnter={(e) => e.target.style.color = 'white'} onMouseLeave={(e) => e.target.style.color = 'rgba(255,255,255,0.85)'}>{t.faqs}</Link>
 
             {user ? (
               <>
                 {user.role === 'content_creator' && (
-                  <Link to="/creator/dashboard" style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: '500' }}>Creator</Link>
+                  <Link to="/creator/dashboard" style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: '500' }}>{t.creator}</Link>
                 )}
                 {user.role === 'admin' && (
-                  <Link to="/admin" style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: '500' }}>Admin</Link>
+                  <Link to="/admin" style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: '500' }}>{t.admin}</Link>
                 )}
-                <Link to="/dashboard" style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: '500' }}>Dashboard</Link>
+                <Link to="/dashboard" style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: '500' }}>{t.dashboard}</Link>
                 <span style={{
                   background: 'rgba(255,255,255,0.12)',
                   padding: '0.4rem 1rem',
@@ -98,7 +158,7 @@ const Navbar = () => {
                   fontWeight: '600',
                   transition: 'all 0.3s'
                 }} onMouseEnter={(e) => { e.target.style.background = '#ff5252'; e.target.style.color = 'white'; }} onMouseLeave={(e) => { e.target.style.background = 'rgba(255,82,82,0.2)'; e.target.style.color = '#ff6b6b'; }}>
-                  Logout
+                  {t.logout}
                 </button>
               </>
             ) : (
@@ -113,7 +173,7 @@ const Navbar = () => {
                   background: 'rgba(255,255,255,0.1)',
                   transition: 'background 0.3s'
                 }} onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.2)'} onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}>
-                  Login
+                  {t.login}
                 </Link>
                 <Link to="/register" style={{
                   background: 'linear-gradient(135deg, #ff6f00, #f57c00)',
@@ -126,13 +186,36 @@ const Navbar = () => {
                   transition: 'transform 0.3s, box-shadow 0.3s',
                   boxShadow: '0 4px 15px rgba(255,111,0,0.3)'
                 }} onMouseEnter={(e) => { e.target.style.transform = 'scale(1.05)'; e.target.style.boxShadow = '0 6px 25px rgba(255,111,0,0.5)'; }} onMouseLeave={(e) => { e.target.style.transform = 'scale(1)'; e.target.style.boxShadow = '0 4px 15px rgba(255,111,0,0.3)'; }}>
-                  Get Started
+                  {t.getStarted}
                 </Link>
               </>
             )}
+
+            {/* Language Selector */}
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              style={{
+                background: 'rgba(255,255,255,0.1)',
+                color: 'white',
+                border: '1px solid rgba(255,255,255,0.2)',
+                padding: '0.4rem 1rem',
+                borderRadius: 50,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                outline: 'none',
+                backdropFilter: 'blur(5px)'
+              }}
+            >
+              {languages.map(lang => (
+                <option key={lang.code} value={lang.code} style={{ background: '#1a237e', color: 'white' }}>
+                  {lang.label}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {/* Hamburger Button - Animated */}
+          {/* Hamburger Button */}
           <button
             onClick={toggleMenu}
             style={{
@@ -182,7 +265,7 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Mobile Dropdown Menu - Modern */}
+      {/* Mobile Dropdown Menu */}
       <div style={{
         position: 'fixed',
         top: '70px',
@@ -216,7 +299,7 @@ const Navbar = () => {
             transition: 'background 0.3s',
             fontWeight: '500'
           }} onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.target.style.background = 'transparent'}>
-            🎓 Tours
+            {t.toursIcon}
           </Link>
           <Link to="/faqs" onClick={() => setIsOpen(false)} style={{
             color: 'white',
@@ -227,8 +310,32 @@ const Navbar = () => {
             transition: 'background 0.3s',
             fontWeight: '500'
           }} onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.target.style.background = 'transparent'}>
-            ❓ FAQs
+            {t.faqsIcon}
           </Link>
+
+          {/* Mobile Language Selector */}
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            style={{
+              background: 'rgba(255,255,255,0.1)',
+              color: 'white',
+              border: '1px solid rgba(255,255,255,0.2)',
+              padding: '0.8rem 1rem',
+              borderRadius: '12px',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              outline: 'none',
+              width: '100%',
+              marginTop: '0.5rem'
+            }}
+          >
+            {languages.map(lang => (
+              <option key={lang.code} value={lang.code} style={{ background: '#1a237e', color: 'white' }}>
+                {lang.label}
+              </option>
+            ))}
+          </select>
 
           {user ? (
             <>
@@ -242,7 +349,7 @@ const Navbar = () => {
                   transition: 'background 0.3s',
                   fontWeight: '500'
                 }} onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.target.style.background = 'transparent'}>
-                  🎬 Creator Dashboard
+                  {t.creatorDashboard}
                 </Link>
               )}
               {user.role === 'admin' && (
@@ -255,7 +362,7 @@ const Navbar = () => {
                   transition: 'background 0.3s',
                   fontWeight: '500'
                 }} onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.target.style.background = 'transparent'}>
-                  🛡️ Admin
+                  {t.adminIcon}
                 </Link>
               )}
               <Link to="/dashboard" onClick={() => setIsOpen(false)} style={{
@@ -267,7 +374,7 @@ const Navbar = () => {
                 transition: 'background 0.3s',
                 fontWeight: '500'
               }} onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.target.style.background = 'transparent'}>
-                📊 Dashboard
+                {t.dashboardIcon}
               </Link>
               <div style={{
                 padding: '0.8rem 1rem',
@@ -291,7 +398,7 @@ const Navbar = () => {
                 marginTop: '0.5rem',
                 transition: 'transform 0.3s'
               }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.02)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}>
-                🚪 Logout
+                {t.logoutIcon}
               </button>
             </>
           ) : (
@@ -305,7 +412,7 @@ const Navbar = () => {
                 transition: 'background 0.3s',
                 fontWeight: '500'
               }} onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.target.style.background = 'transparent'}>
-                🔑 Login
+                {t.loginIcon}
               </Link>
               <Link to="/register" onClick={() => setIsOpen(false)} style={{
                 background: 'linear-gradient(135deg, #ff6f00, #f57c00)',
@@ -319,7 +426,7 @@ const Navbar = () => {
                 marginTop: '0.5rem',
                 transition: 'transform 0.3s'
               }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.02)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}>
-                Get Started
+                {t.getStartedIcon}
               </Link>
             </>
           )}

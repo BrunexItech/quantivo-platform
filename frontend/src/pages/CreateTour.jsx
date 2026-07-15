@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';
 
 const CreateTour = () => {
   const navigate = useNavigate();
+  const { language, translateContent } = useLanguage();
   const [formData, setFormData] = useState({
     title: '', description: '', category: 'wildlife',
     mediaType: '360_image', mediaUrl: '', thumbnailUrl: '',
-    videoUrl: '', // NEW: Video URL field
+    videoUrl: '',
     location: { county: '', subCounty: '', ward: '' },
     cbcAlignment: { grades: [], subjects: [] },
     voiceOver: { enabled: true, languages: [] },
@@ -30,6 +32,7 @@ const CreateTour = () => {
   const [audioBlob, setAudioBlob] = useState(null);
   const [audioUrl, setAudioUrl] = useState('');
   const [recordingTime, setRecordingTime] = useState(0);
+  const [translatedTexts, setTranslatedTexts] = useState({});
   
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -37,6 +40,95 @@ const CreateTour = () => {
 
   const API_KEY = 'keyPub1569gsvndc123kg9sjhg';
   const BASE_URL = 'https://kenyaareadata.vercel.app/api/areas';
+
+  const texts = {
+    title: '🎬 Create New Virtual Tour',
+    tourTitle: 'Tour Title',
+    category: 'Category',
+    description: 'Description',
+    uploadThumbnail: '📸 Upload Thumbnail Image',
+    clickToUploadThumbnail: 'Click to upload thumbnail image',
+    thumbnailHelper: 'This image will appear on the tour card (JPEG, PNG)',
+    videoUrl: '🎥 Video URL (Optional - YouTube or direct video link)',
+    videoPlaceholder: 'https://www.youtube.com/watch?v=... or https://example.com/video.mp4',
+    videoHelper: 'Paste a video link (YouTube, Vimeo, or direct MP4 URL). The video will be displayed in the VR viewer.',
+    upload360: '📸 Upload 360° Image',
+    clickToUpload360: 'Click to upload 360° image',
+    imageHelper: 'JPEG, PNG, GIF (Max 500MB)',
+    imageReady: 'Image ready to add as scene',
+    addScene: '➕ Add Current Image as Scene',
+    scenesList: '📋 Scenes',
+    backgroundMusic: '🎵 Background Music (Optional)',
+    clickToUploadMusic: 'Click to upload background music (MP3)',
+    voiceNarration: '🎙️ Voice Narration',
+    recordAudio: 'Record Audio',
+    startRecording: '🎤 Start Recording',
+    stopRecording: '⏹️ Stop',
+    recordHelper: 'Click record, speak into your microphone, then stop.',
+    orUpload: '— OR Upload Audio File —',
+    clickToUploadNarration: 'Click to upload voice narration (MP3)',
+    autoRotate: 'Auto-Rotate',
+    enabled: 'Enabled',
+    disabled: 'Disabled',
+    rotationSpeed: 'Rotation Speed',
+    speedHelper: 'Default: 2 (degrees per second)',
+    hotspots: '📍 Points of Interest (Hotspots)',
+    addHotspot: '+ Add Hotspot',
+    noHotspots: 'No hotspots added yet.',
+    hotspotHelper: 'Hotspots appear as clickable points in the VR view.',
+    location: 'Location',
+    county: 'County',
+    subCounty: 'Sub-County',
+    ward: 'Ward',
+    loadingCounties: 'Loading counties...',
+    selectCounty: 'Select County',
+    selectCountyFirst: 'Select a county first',
+    loadingSubCounties: 'Loading sub-counties...',
+    selectSubCounty: 'Select Sub-County',
+    selectSubCountyFirst: 'Select a sub-county first',
+    loadingWards: 'Loading wards...',
+    selectWard: 'Select Ward',
+    submissionProcess: '⚠️ Submission Process:',
+    submissionItem1: 'Your tour will be reviewed by admin for quality',
+    submissionItem2: 'Upon approval, it goes live and you start earning 70% of bookings',
+    submissionItem3: 'Pricing: Ksh 300 / student (fixed)',
+    submitTour: 'Submit Tour for Review',
+    uploading: 'Uploading...',
+    noImageError: 'Please upload a 360° image, add a scene, or enter a video URL.',
+    sceneAdded: '✅ Scene added! You can now upload another image for the next scene.',
+    enterSceneTitle: 'Enter scene title:',
+    scenePrefix: 'Scene',
+    uploadSuccess: '✅ {type} uploaded successfully!',
+    uploadFailed: '❌ Upload failed: {message}',
+    recordingUploaded: '✅ Audio recording uploaded successfully!',
+    recordingFailed: '❌ Failed to upload recording: {message}',
+    submitSuccess: '✅ Tour submitted for admin review!',
+    submitFailed: 'Submission failed',
+    countiesFailed: 'Could not load counties. Please refresh and try again.',
+    subCountiesFailed: 'Could not load sub-counties. Please try again.',
+    wardsFailed: 'Could not load wards. Please try again.',
+    micDenied: 'Microphone access denied. Please allow microphone permissions.'
+  };
+
+  useEffect(() => {
+    const translateTexts = async () => {
+      if (language === 'en') {
+        setTranslatedTexts(texts);
+        return;
+      }
+
+      const translated = {};
+      for (const [key, value] of Object.entries(texts)) {
+        const result = await translateContent(value);
+        translated[key] = result;
+      }
+      setTranslatedTexts(translated);
+    };
+
+    translateTexts();
+  }, [language]);
+
+  const t = translatedTexts;
 
   // Fetch counties...
   useEffect(() => {
@@ -49,7 +141,7 @@ const CreateTour = () => {
         setCounties(countyNames);
       } catch (err) {
         console.error('Failed to fetch counties:', err);
-        alert('Could not load counties. Please refresh and try again.');
+        alert(t.countiesFailed);
       } finally {
         setLoading(prev => ({ ...prev, counties: false }));
       }
@@ -83,7 +175,7 @@ const CreateTour = () => {
         setWards([]);
       } catch (err) {
         console.error('Failed to fetch constituencies:', err);
-        alert('Could not load sub-counties. Please try again.');
+        alert(t.subCountiesFailed);
       } finally {
         setLoading(prev => ({ ...prev, constituencies: false }));
       }
@@ -115,7 +207,7 @@ const CreateTour = () => {
         }));
       } catch (err) {
         console.error('Failed to fetch wards:', err);
-        alert('Could not load wards. Please try again.');
+        alert(t.wardsFailed);
       } finally {
         setLoading(prev => ({ ...prev, wards: false }));
       }
@@ -153,7 +245,7 @@ const CreateTour = () => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
     } catch (err) {
-      alert('Microphone access denied. Please allow microphone permissions.');
+      alert(t.micDenied);
       console.error('Recording error:', err);
     }
   };
@@ -180,10 +272,10 @@ const CreateTour = () => {
           ...prev,
           narration: res.data.data.url
         }));
-        alert('✅ Audio recording uploaded successfully!');
+        alert(t.recordingUploaded);
       }
     } catch (err) {
-      alert('❌ Failed to upload recording: ' + (err.response?.data?.message || err.message));
+      alert(t.recordingFailed.replace('{message}', err.response?.data?.message || err.message));
     } finally {
       setUploading(false);
     }
@@ -198,10 +290,10 @@ const CreateTour = () => {
   // ===== SCENE MANAGEMENT =====
   const addScene = () => {
     if (!formData.mediaUrl) {
-      alert('Please upload a 360° image for the scene first.');
+      alert(t.noImageError);
       return;
     }
-    const sceneTitle = prompt('Enter scene title:') || `Scene ${formData.scenes.length + 1}`;
+    const sceneTitle = prompt(t.enterSceneTitle) || `${t.scenePrefix} ${formData.scenes.length + 1}`;
     const newScene = {
       id: Date.now(),
       title: sceneTitle,
@@ -214,7 +306,7 @@ const CreateTour = () => {
       mediaUrl: '',
       hotspots: []
     }));
-    alert('✅ Scene added! You can now upload another image for the next scene.');
+    alert(t.sceneAdded);
   };
 
   const removeScene = (index) => {
@@ -261,10 +353,10 @@ const CreateTour = () => {
             narration: url
           }));
         }
-        alert(`✅ ${type} uploaded successfully!`);
+        alert(t.uploadSuccess.replace('{type}', type));
       }
     } catch (err) {
-      alert('❌ Upload failed: ' + (err.response?.data?.message || err.message));
+      alert(t.uploadFailed.replace('{message}', err.response?.data?.message || err.message));
     } finally {
       setUploading(false);
     }
@@ -295,7 +387,7 @@ const CreateTour = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.mediaUrl && formData.scenes.length === 0 && !formData.videoUrl) {
-      alert('Please upload a 360° image, add a scene, or enter a video URL.');
+      alert(t.noImageError);
       return;
     }
     if (formData.mediaUrl) {
@@ -331,32 +423,31 @@ const CreateTour = () => {
         ...formData,
         scenes: scenesData,
         hasMultipleScenes: scenesData.length > 1,
-        // If videoUrl is provided, use it as mediaUrl
         mediaUrl: formData.videoUrl || formData.mediaUrl
       };
 
       await api.post('/tours', tourData);
-      alert('✅ Tour submitted for admin review!');
+      alert(t.submitSuccess);
       navigate('/creator/dashboard');
     } catch (err) {
-      alert(err.response?.data?.message || 'Submission failed');
+      alert(err.response?.data?.message || t.submitFailed);
     }
   };
 
   return (
     <div className="container" style={{ maxWidth: 900 }}>
-      <h1 style={{ color: '#1a237e', marginBottom: '1.5rem' }}>🎬 Create New Virtual Tour</h1>
+      <h1 style={{ color: '#1a237e', marginBottom: '1.5rem' }}>{t.title}</h1>
 
       <div className="card">
         <form onSubmit={handleSubmit}>
           {/* Basic Info */}
           <div className="grid-2">
             <div className="form-group">
-              <label>Tour Title</label>
+              <label>{t.tourTitle}</label>
               <input required value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
             </div>
             <div className="form-group">
-              <label>Category</label>
+              <label>{t.category}</label>
               <select required value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })}>
                 <option value="wildlife">Wildlife</option>
                 <option value="history">History</option>
@@ -369,13 +460,13 @@ const CreateTour = () => {
           </div>
 
           <div className="form-group">
-            <label>Description</label>
+            <label>{t.description}</label>
             <textarea rows="3" required value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
           </div>
 
           {/* ===== THUMBNAIL IMAGE UPLOAD ===== */}
           <div className="form-group">
-            <label>📸 Upload Thumbnail Image</label>
+            <label>{t.uploadThumbnail}</label>
             <div style={{
               border: '2px dashed #ddd',
               borderRadius: '10px',
@@ -394,8 +485,8 @@ const CreateTour = () => {
               />
               <label htmlFor="thumbnailInput" style={{ cursor: 'pointer', display: 'block' }}>
                 <div style={{ fontSize: '2.5rem' }}>🖼️</div>
-                <p>{uploading && uploadType === 'thumbnail' ? 'Uploading...' : 'Click to upload thumbnail image'}</p>
-                <p style={{ fontSize: '0.8rem', color: '#888' }}>This image will appear on the tour card (JPEG, PNG)</p>
+                <p>{uploading && uploadType === 'thumbnail' ? t.uploading : t.clickToUploadThumbnail}</p>
+                <p style={{ fontSize: '0.8rem', color: '#888' }}>{t.thumbnailHelper}</p>
               </label>
             </div>
             {formData.thumbnailUrl && (
@@ -407,22 +498,22 @@ const CreateTour = () => {
 
           {/* ===== VIDEO URL INPUT ===== */}
           <div className="form-group">
-            <label>🎥 Video URL (Optional - YouTube or direct video link)</label>
+            <label>{t.videoUrl}</label>
             <input 
               type="url" 
               value={formData.videoUrl} 
               onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} 
-              placeholder="https://www.youtube.com/watch?v=... or https://example.com/video.mp4"
+              placeholder={t.videoPlaceholder}
               style={{ width: '100%', padding: '0.8rem', border: '2px solid #ddd', borderRadius: '8px' }}
             />
             <small style={{ fontSize: '0.8rem', color: '#888', display: 'block', marginTop: '0.3rem' }}>
-              Paste a video link (YouTube, Vimeo, or direct MP4 URL). The video will be displayed in the VR viewer.
+              {t.videoHelper}
             </small>
           </div>
 
           {/* ===== 360° IMAGE UPLOAD ===== */}
           <div className="form-group">
-            <label>📸 Upload 360° Image</label>
+            <label>{t.upload360}</label>
             <div style={{
               border: '2px dashed #ddd',
               borderRadius: '10px',
@@ -441,13 +532,13 @@ const CreateTour = () => {
               />
               <label htmlFor="fileInput" style={{ cursor: 'pointer', display: 'block' }}>
                 <div style={{ fontSize: '3rem' }}>🖼️</div>
-                <p>{uploading && uploadType === 'image' ? 'Uploading...' : 'Click to upload 360° image'}</p>
-                <p style={{ fontSize: '0.8rem', color: '#888' }}>JPEG, PNG, GIF (Max 500MB)</p>
+                <p>{uploading && uploadType === 'image' ? t.uploading : t.clickToUpload360}</p>
+                <p style={{ fontSize: '0.8rem', color: '#888' }}>{t.imageHelper}</p>
               </label>
             </div>
             {formData.mediaUrl && (
               <div style={{ marginTop: '0.5rem', color: '#2e7d32' }}>
-                ✅ Image ready to add as scene
+                ✅ {t.imageReady}
               </div>
             )}
           </div>
@@ -460,13 +551,13 @@ const CreateTour = () => {
             style={{ marginBottom: '1rem', width: '100%' }}
             disabled={!formData.mediaUrl}
           >
-            ➕ Add Current Image as Scene
+            {t.addScene}
           </button>
 
           {/* ===== SCENES LIST ===== */}
           {formData.scenes.length > 0 && (
             <div className="form-group">
-              <label>📋 Scenes ({formData.scenes.length})</label>
+              <label>{t.scenesList} ({formData.scenes.length})</label>
               <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
                 {formData.scenes.map((scene, index) => (
                   <div key={scene.id} style={{ 
@@ -488,7 +579,7 @@ const CreateTour = () => {
 
           {/* ===== BACKGROUND MUSIC ===== */}
           <div className="form-group">
-            <label>🎵 Background Music (Optional)</label>
+            <label>{t.backgroundMusic}</label>
             <div style={{
               border: '2px dashed #ddd',
               borderRadius: '10px',
@@ -506,7 +597,7 @@ const CreateTour = () => {
                 id="audioInput"
               />
               <label htmlFor="audioInput" style={{ cursor: 'pointer', display: 'block' }}>
-                <p>{uploading && uploadType === 'audio' ? 'Uploading...' : 'Click to upload background music (MP3)'}</p>
+                <p>{uploading && uploadType === 'audio' ? t.uploading : t.clickToUploadMusic}</p>
               </label>
             </div>
             {formData.backgroundMusic && (
@@ -518,7 +609,7 @@ const CreateTour = () => {
 
           {/* ===== VOICE NARRATION - RECORD OR UPLOAD ===== */}
           <div className="form-group">
-            <label>🎙️ Voice Narration</label>
+            <label>{t.voiceNarration}</label>
             
             {/* Recording Section */}
             <div style={{
@@ -528,7 +619,7 @@ const CreateTour = () => {
               marginBottom: '1rem',
               background: '#f5f5f5'
             }}>
-              <p style={{ marginBottom: '0.5rem', fontWeight: 'bold' }}>Record Audio</p>
+              <p style={{ marginBottom: '0.5rem', fontWeight: 'bold' }}>{t.recordAudio}</p>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                 <button 
                   type="button" 
@@ -544,7 +635,7 @@ const CreateTour = () => {
                     fontSize: '1rem'
                   }}
                 >
-                  {isRecording ? '🔴 Recording...' : '🎤 Start Recording'}
+                  {isRecording ? '🔴 Recording...' : t.startRecording}
                 </button>
                 {isRecording && (
                   <button 
@@ -560,7 +651,7 @@ const CreateTour = () => {
                       fontSize: '1rem'
                     }}
                   >
-                    ⏹️ Stop
+                    {t.stopRecording}
                   </button>
                 )}
                 {isRecording && (
@@ -570,7 +661,7 @@ const CreateTour = () => {
                 )}
               </div>
               <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '0.5rem' }}>
-                Click record, speak into your microphone, then stop.
+                {t.recordHelper}
               </p>
               {audioUrl && (
                 <div style={{ marginTop: '0.5rem' }}>
@@ -588,7 +679,7 @@ const CreateTour = () => {
               background: '#f9f9f9',
               cursor: 'pointer'
             }}>
-              <p style={{ marginBottom: '0.5rem', color: '#888' }}>— OR Upload Audio File —</p>
+              <p style={{ marginBottom: '0.5rem', color: '#888' }}>{t.orUpload}</p>
               <input
                 type="file"
                 accept="audio/mpeg,audio/mp3,audio/wav"
@@ -598,7 +689,7 @@ const CreateTour = () => {
                 id="narrationInput"
               />
               <label htmlFor="narrationInput" style={{ cursor: 'pointer', display: 'block' }}>
-                <p>{uploading && uploadType === 'narration' ? 'Uploading...' : 'Click to upload voice narration (MP3)'}</p>
+                <p>{uploading && uploadType === 'narration' ? t.uploading : t.clickToUploadNarration}</p>
               </label>
             </div>
             {formData.narration && (
@@ -611,17 +702,17 @@ const CreateTour = () => {
           {/* ===== AUTO-ROTATE SETTINGS ===== */}
           <div className="grid-2">
             <div className="form-group">
-              <label>Auto-Rotate</label>
+              <label>{t.autoRotate}</label>
               <select 
                 value={formData.autoRotate} 
                 onChange={(e) => setFormData({ ...formData, autoRotate: e.target.value === 'true' })}
               >
-                <option value="true">Enabled</option>
-                <option value="false">Disabled</option>
+                <option value="true">{t.enabled}</option>
+                <option value="false">{t.disabled}</option>
               </select>
             </div>
             <div className="form-group">
-              <label>Rotation Speed</label>
+              <label>{t.rotationSpeed}</label>
               <input 
                 type="number" 
                 min="0.5" 
@@ -630,18 +721,18 @@ const CreateTour = () => {
                 value={formData.autoRotateSpeed} 
                 onChange={(e) => setFormData({ ...formData, autoRotateSpeed: parseFloat(e.target.value) })}
               />
-              <small style={{ fontSize: '0.8rem', color: '#888' }}>Default: 2 (degrees per second)</small>
+              <small style={{ fontSize: '0.8rem', color: '#888' }}>{t.speedHelper}</small>
             </div>
           </div>
 
           {/* ===== HOTSPOTS ===== */}
           <div className="form-group">
-            <label>📍 Points of Interest (Hotspots)</label>
+            <label>{t.hotspots}</label>
             <button type="button" onClick={addHotspot} className="btn btn-primary" style={{ marginBottom: '1rem' }}>
-              + Add Hotspot
+              {t.addHotspot}
             </button>
             {formData.hotspots.length === 0 ? (
-              <p style={{ color: '#888', fontSize: '0.9rem' }}>No hotspots added yet.</p>
+              <p style={{ color: '#888', fontSize: '0.9rem' }}>{t.noHotspots}</p>
             ) : (
               <div>
                 {formData.hotspots.map((hotspot, index) => (
@@ -661,26 +752,26 @@ const CreateTour = () => {
               </div>
             )}
             <small style={{ fontSize: '0.8rem', color: '#888', display: 'block', marginTop: '0.5rem' }}>
-              Hotspots appear as clickable points in the VR view.
+              {t.hotspotHelper}
             </small>
           </div>
 
           {/* ===== LOCATION ===== */}
-          <h3 style={{ marginTop: '1.5rem', color: '#1a237e' }}>Location</h3>
+          <h3 style={{ marginTop: '1.5rem', color: '#1a237e' }}>{t.location}</h3>
           <div className="grid-3">
             <div className="form-group">
-              <label>County</label>
+              <label>{t.county}</label>
               <select 
                 value={formData.location.county} 
                 onChange={(e) => setFormData({ ...formData, location: { ...formData.location, county: e.target.value } })}
                 disabled={loading.counties}
               >
-                <option value="">{loading.counties ? 'Loading counties...' : 'Select County'}</option>
+                <option value="">{loading.counties ? t.loadingCounties : t.selectCounty}</option>
                 {counties.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label>Sub-County</label>
+              <label>{t.subCounty}</label>
               <select 
                 value={formData.location.subCounty} 
                 onChange={(e) => setFormData({ ...formData, location: { ...formData.location, subCounty: e.target.value } })}
@@ -688,16 +779,16 @@ const CreateTour = () => {
               >
                 <option value="">
                   {!formData.location.county 
-                    ? 'Select a county first' 
+                    ? t.selectCountyFirst
                     : loading.constituencies 
-                      ? 'Loading sub-counties...' 
-                      : 'Select Sub-County'}
+                      ? t.loadingSubCounties
+                      : t.selectSubCounty}
                 </option>
                 {constituencies.map(sc => <option key={sc} value={sc}>{sc}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label>Ward</label>
+              <label>{t.ward}</label>
               <select 
                 value={formData.location.ward} 
                 onChange={(e) => setFormData({ ...formData, location: { ...formData.location, ward: e.target.value } })}
@@ -705,10 +796,10 @@ const CreateTour = () => {
               >
                 <option value="">
                   {!formData.location.subCounty 
-                    ? 'Select a sub-county first' 
+                    ? t.selectSubCountyFirst
                     : loading.wards 
-                      ? 'Loading wards...' 
-                      : 'Select Ward'}
+                      ? t.loadingWards
+                      : t.selectWard}
                 </option>
                 {wards.map(w => <option key={w} value={w}>{w}</option>)}
               </select>
@@ -716,17 +807,17 @@ const CreateTour = () => {
           </div>
 
           <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#fff3e0', borderRadius: 10 }}>
-            <p><strong>⚠️ Submission Process:</strong></p>
+            <p><strong>{t.submissionProcess}</strong></p>
             <ul style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
-              <li>Your tour will be reviewed by admin for quality</li>
-              <li>Upon approval, it goes live and you start earning 70% of bookings</li>
-              <li>Pricing: Ksh 300 / student (fixed)</li>
+              <li>{t.submissionItem1}</li>
+              <li>{t.submissionItem2}</li>
+              <li>{t.submissionItem3}</li>
             </ul>
           </div>
 
           <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
             <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={uploading}>
-              {uploading ? 'Uploading...' : 'Submit Tour for Review'}
+              {uploading ? t.uploading : t.submitTour}
             </button>
           </div>
         </form>

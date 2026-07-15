@@ -12,7 +12,8 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.1",
     "axios": "^1.6.2",
-    "aframe": "^1.4.0"
+    "aframe": "^1.4.0",
+    "react-hot-toast": "^2.4.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",

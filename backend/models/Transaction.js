@@ -8,6 +8,8 @@ const transactionSchema = new mongoose.Schema({
   studentCount: { type: Number, default: 1 },
   mpesaReceiptNumber: String,
   mpesaPhoneNumber: String,
+  mpesaCheckoutRequestID: { type: String },
+  mpesaMerchantRequestID: { type: String },
   transactionType: {
     type: String,
     enum: ['STK_PUSH', 'C2B', 'B2C', 'CARD'],
@@ -20,6 +22,7 @@ const transactionSchema = new mongoose.Schema({
     enum: ['pending', 'completed', 'failed', 'refunded'],
     default: 'pending'
   },
+  failureReason: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 

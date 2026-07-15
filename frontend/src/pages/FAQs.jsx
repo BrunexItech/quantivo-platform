@@ -1,4 +1,11 @@
+import { useLanguage } from '../context/LanguageContext';
+import { useState, useEffect } from 'react';
+
 const FAQs = () => {
+  const { language, translateContent } = useLanguage();
+  const [translatedFAQs, setTranslatedFAQs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const faqs = [
     { q: 'What is Quantivo?', a: "Quantivo is Kenya's premier virtual field trip platform offering immersive VR/AR educational experiences aligned with the Competency-Based Curriculum (CBC)." },
     { q: 'How much does a virtual tour cost?', a: 'Each virtual tour costs Ksh 300 per student per visit. Equivalent pricing available in USD ($2.31), EUR (€2.13), and JPY (¥345).' },
@@ -12,10 +19,64 @@ const FAQs = () => {
     { q: 'Can schools get bulk discounts?', a: 'Yes! Contact us at info@quantivo.co.ke for institutional licensing and bulk pricing.' }
   ];
 
+  useEffect(() => {
+    const translateFAQs = async () => {
+      if (language === 'en') {
+        setTranslatedFAQs(faqs);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      const translated = [];
+
+      for (const faq of faqs) {
+        const translatedQ = await translateContent(faq.q);
+        const translatedA = await translateContent(faq.a);
+        translated.push({ q: translatedQ, a: translatedA });
+      }
+
+      setTranslatedFAQs(translated);
+      setLoading(false);
+    };
+
+    translateFAQs();
+  }, [language]);
+
+  if (loading && language !== 'en') {
+    return (
+      <div className="container" style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '60vh' 
+      }}>
+        <div style={{
+          width: '50px',
+          height: '50px',
+          border: '5px solid #e0e0e0',
+          borderTop: '5px solid #1e88e5',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  const displayFAQs = translatedFAQs.length > 0 ? translatedFAQs : faqs;
+
   return (
-    <div className="container" style={{ maxWidth: 900 }}>
-      <h1 style={{ color: '#1a237e', marginBottom: '1.5rem' }}>❓ Frequently Asked Questions</h1>
-      {faqs.map((faq, i) => (
+    <div className="container" style={{ maxWidth: 900, paddingTop: '6rem' }}>
+      <h1 style={{ color: '#1a237e', marginBottom: '1.5rem' }}>
+        {language === 'en' ? '❓ Frequently Asked Questions' : '❓ Maswali Yanayoulizwa Sana'}
+      </h1>
+      {displayFAQs.map((faq, i) => (
         <div key={i} className="card">
           <h3 style={{ color: '#1e88e5', marginBottom: '0.5rem' }}>{faq.q}</h3>
           <p>{faq.a}</p>

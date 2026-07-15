@@ -1,17 +1,56 @@
 import { useParams, Link } from 'react-router-dom';
 import { useEffect, useState, useRef } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';
 
 const VRViewer = () => {
   const { id } = useParams();
+  const { language, translateContent } = useLanguage();
   const [tour, setTour] = useState(null);
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [translatedTexts, setTranslatedTexts] = useState({});
   const viewerRef = useRef(null);
   const audioRef = useRef(null);
   const narrationRef = useRef(null);
   const scriptLoadedRef = useRef(false);
   const audioStartedRef = useRef(false);
+
+  const texts = {
+    backToTour: '← Back to tour',
+    loadingVR: 'Loading VR experience...',
+    backgroundMusic: '🎵 Background music',
+    narration: '🎙️ Narration',
+    autoRotate: '🔄 Auto-rotate',
+    videoLabel: '🎥 360° Video',
+    loading: 'Loading...',
+    sceneIndicator: '{current} / {total}',
+    loadingTransition: '🔄 Loading...'
+  };
+
+  useEffect(() => {
+    const translateTexts = async () => {
+      if (language === 'en') {
+        setTranslatedTexts(texts);
+        return;
+      }
+
+      const translated = {};
+      for (const [key, value] of Object.entries(texts)) {
+        try {
+          const result = await translateContent(value);
+          translated[key] = result || value;
+        } catch (err) {
+          translated[key] = value;
+        }
+      }
+      setTranslatedTexts(translated);
+    };
+
+    translateTexts();
+  }, [language]);
+
+  const t = translatedTexts;
 
   useEffect(() => {
     api.get(`/tours/${id}`).then(res => {
@@ -116,12 +155,10 @@ const VRViewer = () => {
       }
     }));
 
-    // ===== DETECT IF VIDEO =====
     const mediaUrl = scene.mediaUrl || tour.mediaUrl;
     const isVideo = tour.mediaType === '360_video' || 
                     (mediaUrl && (mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.includes('cloudinary.com/video')));
 
-    // ===== CONFIG WITH VIDEO SUPPORT =====
     const config = {
       type: 'equirectangular',
       autoLoad: true,
@@ -139,7 +176,6 @@ const VRViewer = () => {
       hotSpots: hotspots
     };
 
-    // ===== IF VIDEO, USE video PROPERTY =====
     if (isVideo) {
       config.panorama = mediaUrl;
       config.video = mediaUrl;
@@ -160,7 +196,10 @@ const VRViewer = () => {
 
     const indicatorEl = document.getElementById('scene-indicator');
     if (indicatorEl) {
-      indicatorEl.textContent = `${index + 1} / ${scenes.length}`;
+      const indicatorText = t.sceneIndicator || '{current} / {total}';
+      indicatorEl.textContent = indicatorText
+        .replace('{current}', index + 1)
+        .replace('{total}', scenes.length);
     }
 
     setTimeout(() => setIsTransitioning(false), 500);
@@ -181,12 +220,17 @@ const VRViewer = () => {
     }
   };
 
-  if (!tour) return <div className="container">Loading VR experience...</div>;
+  if (!tour) return <div className="container">{t.loadingVR || 'Loading VR experience...'}</div>;
 
   const scenes = tour.scenes && tour.scenes.length > 0 
     ? tour.scenes 
     : (tour.mediaUrl ? [{ title: tour.title, mediaUrl: tour.mediaUrl, hotspots: tour.hotspots || [] }] : []);
   const hasMultipleScenes = scenes.length > 1;
+
+  // Helper function to safely render translated text
+  const safeText = (key, fallback) => {
+    return t[key] || fallback;
+  };
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: '#000', zIndex: 3000 }}>
@@ -206,26 +250,30 @@ const VRViewer = () => {
         border: '1px solid rgba(255,255,255,0.1)'
       }}>
         <h2 id="scene-title" style={{ margin: 0 }}>{tour.title}</h2>
-        <Link to={`/tours/${id}`} style={{ color: '#4fc3f7', fontSize: '0.9rem' }}>← Back to tour</Link>
+        <Link to={`/tours/${id}`} style={{ color: '#4fc3f7', fontSize: '0.9rem' }}>{safeText('backToTour', '← Back to tour')}</Link>
         
         {hasMultipleScenes && (
           <div style={{ fontSize: '0.8rem', color: '#aaa', marginTop: '0.3rem' }}>
-            <span id="scene-indicator">1 / {scenes.length}</span>
-            {isTransitioning && <span style={{ marginLeft: '0.5rem' }}>🔄 Loading...</span>}
+            <span id="scene-indicator">
+              {safeText('sceneIndicator', '{current} / {total}')
+                .replace('{current}', currentSceneIndex + 1)
+                .replace('{total}', scenes.length)}
+            </span>
+            {isTransitioning && <span style={{ marginLeft: '0.5rem' }}>{safeText('loadingTransition', '🔄 Loading...')}</span>}
           </div>
         )}
         
         {tour.backgroundMusic && (
-          <div style={{ fontSize: '0.8rem', color: '#aaa' }}>🎵 Background music</div>
+          <div style={{ fontSize: '0.8rem', color: '#aaa' }}>{safeText('backgroundMusic', '🎵 Background music')}</div>
         )}
         {tour.narration && (
-          <div style={{ fontSize: '0.8rem', color: '#aaa' }}>🎙️ Narration</div>
+          <div style={{ fontSize: '0.8rem', color: '#aaa' }}>{safeText('narration', '🎙️ Narration')}</div>
         )}
         {tour.autoRotate && (
-          <div style={{ fontSize: '0.8rem', color: '#aaa' }}>🔄 Auto-rotate</div>
+          <div style={{ fontSize: '0.8rem', color: '#aaa' }}>{safeText('autoRotate', '🔄 Auto-rotate')}</div>
         )}
         {tour.mediaType === '360_video' && (
-          <div style={{ fontSize: '0.8rem', color: '#4fc3f7' }}>🎥 360° Video</div>
+          <div style={{ fontSize: '0.8rem', color: '#4fc3f7' }}>{safeText('videoLabel', '🎥 360° Video')}</div>
         )}
       </div>
 

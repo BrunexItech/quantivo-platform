@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const TouristRegister = () => {
   const [formData, setFormData] = useState({
@@ -10,12 +11,56 @@ const TouristRegister = () => {
   const [loadingCounties, setLoadingCounties] = useState(true);
   const [error, setError] = useState('');
   const { register } = useAuth();
+  const { language, translateContent } = useLanguage();
   const navigate = useNavigate();
+  const [translatedTexts, setTranslatedTexts] = useState({});
 
   const interestOptions = ['Wildlife', 'History', 'Culture', 'Beaches', 'Mountains', 'Cities'];
 
   const API_KEY = 'keyPub1569gsvndc123kg9sjhg';
   const BASE_URL = 'https://kenyaareadata.vercel.app/api/areas';
+
+  const texts = {
+    title: '✈️ Tourist Registration',
+    fullName: 'Full Name',
+    email: 'Email',
+    password: 'Password',
+    county: 'County',
+    loadingCounties: 'Loading counties...',
+    selectCounty: 'Select county',
+    interests: 'Interests',
+    wildlife: 'Wildlife',
+    history: 'History',
+    culture: 'Culture',
+    beaches: 'Beaches',
+    mountains: 'Mountains',
+    cities: 'Cities',
+    consent: 'I consent to data processing per',
+    dataProtection: 'Kenya DPA 2019',
+    registerButton: 'Register as Tourist',
+    registrationFailed: 'Registration failed',
+    consentRequired: 'You must consent to data processing'
+  };
+
+  useEffect(() => {
+    const translateTexts = async () => {
+      if (language === 'en') {
+        setTranslatedTexts(texts);
+        return;
+      }
+
+      const translated = {};
+      for (const [key, value] of Object.entries(texts)) {
+        const result = await translateContent(value);
+        translated[key] = result;
+      }
+      setTranslatedTexts(translated);
+    };
+
+    translateTexts();
+  }, [language]);
+
+  const t = translatedTexts;
 
   // Fetch Kenyan counties on component mount
   useEffect(() => {
@@ -49,37 +94,43 @@ const TouristRegister = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.dataConsent) {
-      setError('You must consent to data processing');
+      setError(t.consentRequired || 'You must consent to data processing');
       return;
     }
     try {
       await register(formData, '/auth/register-tourist');
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(err.response?.data?.message || t.registrationFailed || 'Registration failed');
     }
   };
+
+  // Translated interest options
+  const translatedInterests = interestOptions.map(option => {
+    const key = option.toLowerCase();
+    return t[key] || option;
+  });
 
   return (
     <div className="container" style={{ maxWidth: 600, marginTop: '8rem' }}>
       <div className="card">
-        <h2 style={{ textAlign: 'center', color: '#1a237e' }}>✈️ Tourist Registration</h2>
+        <h2 style={{ textAlign: 'center', color: '#1a237e' }}>{t.title}</h2>
         {error && <div style={{ background: '#ffebee', color: '#c62828', padding: '0.8rem', borderRadius: 8, margin: '1rem 0' }}>{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Full Name</label>
+            <label>{t.fullName}</label>
             <input required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
           </div>
           <div className="form-group">
-            <label>Email</label>
+            <label>{t.email}</label>
             <input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
           </div>
           <div className="form-group">
-            <label>Password</label>
+            <label>{t.password}</label>
             <input type="password" required minLength="6" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
           </div>
           <div className="form-group">
-            <label>County</label>
+            <label>{t.county}</label>
             <select 
               required 
               value={formData.county} 
@@ -88,7 +139,7 @@ const TouristRegister = () => {
               style={{ width: '100%', padding: '0.8rem', border: '2px solid #ddd', borderRadius: '8px' }}
             >
               <option value="">
-                {loadingCounties ? 'Loading counties...' : 'Select county'}
+                {loadingCounties ? t.loadingCounties : t.selectCounty}
               </option>
               {counties.map((county) => (
                 <option key={county} value={county}>
@@ -98,9 +149,9 @@ const TouristRegister = () => {
             </select>
           </div>
           <div className="form-group">
-            <label>Interests</label>
+            <label>{t.interests}</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              {interestOptions.map(i => (
+              {interestOptions.map((i, index) => (
                 <button key={i} type="button" onClick={() => toggleInterest(i)} style={{
                   padding: '0.5rem 1rem',
                   border: '2px solid',
@@ -109,17 +160,17 @@ const TouristRegister = () => {
                   borderRadius: 20,
                   cursor: 'pointer',
                   transition: 'all 0.2s'
-                }}>{i}</button>
+                }}>{translatedInterests[index]}</button>
               ))}
             </div>
           </div>
           <div className="form-group">
             <label style={{ display: 'flex', alignItems: 'start', gap: '0.5rem', fontWeight: 'normal' }}>
               <input type="checkbox" required checked={formData.dataConsent} onChange={(e) => setFormData({ ...formData, dataConsent: e.target.checked })} style={{ width: 'auto', marginTop: '0.3rem' }} />
-              <span style={{ fontSize: '0.9rem' }}>I consent to data processing per <Link to="/privacy">Kenya DPA 2019</Link>.</span>
+              <span style={{ fontSize: '0.9rem' }}>{t.consent} <Link to="/privacy">{t.dataProtection}</Link>.</span>
             </label>
           </div>
-          <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Register as Tourist</button>
+          <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>{t.registerButton}</button>
         </form>
       </div>
     </div>

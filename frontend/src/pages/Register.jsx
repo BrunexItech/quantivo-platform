@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -14,10 +15,76 @@ const Register = () => {
   const [loading, setLoading] = useState({ counties: false, constituencies: false, wards: false });
   const [error, setError] = useState('');
   const { register } = useAuth();
+  const { language, translateContent } = useLanguage();
   const navigate = useNavigate();
+  const [translatedTexts, setTranslatedTexts] = useState({});
 
   const API_KEY = 'keyPub1569gsvndc123kg9sjhg';
   const BASE_URL = 'https://kenyaareadata.vercel.app/api/areas';
+
+  const texts = {
+    title: 'Register - Students & Teachers',
+    fullName: 'Full Name',
+    role: 'Role',
+    student: 'Student',
+    teacher: 'Teacher',
+    email: 'Email',
+    phone: 'Phone',
+    password: 'Password',
+    institutionDetails: 'Institution Details',
+    county: 'County',
+    loadingCounties: 'Loading counties...',
+    selectCounty: 'Select County',
+    subCounty: 'Sub-County (Constituency)',
+    selectCountyFirst: 'Select a county first',
+    loadingSubCounties: 'Loading sub-counties...',
+    selectSubCounty: 'Select Sub-County',
+    ward: 'Ward',
+    selectSubCountyFirst: 'Select a sub-county first',
+    loadingWards: 'Loading wards...',
+    selectWard: 'Select Ward',
+    institutionLevel: 'Institution Level',
+    selectLevel: 'Select Level',
+    ecd: 'ECD (PP1-PP2)',
+    primary: 'Primary (Grade 1-6)',
+    jss: 'Junior Secondary (JSS)',
+    secondary: 'Senior Secondary (Form 1-4)',
+    tvet: 'TVET',
+    university: 'University',
+    institutionName: 'Institution Name',
+    institutionPlaceholder: 'Enter your school or institution name',
+    institutionHelper: 'Type the full name of your school or institution',
+    consent: 'I consent to the processing of my personal data in accordance with the',
+    dataProtection: 'Kenya Data Protection Act 2019',
+    terms: 'Terms & Conditions',
+    registerButton: 'Register',
+    touristLink: 'Are you a',
+    tourist: 'Tourist',
+    creatorLink: 'or',
+    creator: 'Content Creator',
+    registrationFailed: 'Registration failed',
+    consentRequired: 'You must consent to data processing'
+  };
+
+  useEffect(() => {
+    const translateTexts = async () => {
+      if (language === 'en') {
+        setTranslatedTexts(texts);
+        return;
+      }
+
+      const translated = {};
+      for (const [key, value] of Object.entries(texts)) {
+        const result = await translateContent(value);
+        translated[key] = result;
+      }
+      setTranslatedTexts(translated);
+    };
+
+    translateTexts();
+  }, [language]);
+
+  const t = translatedTexts;
 
   // Fetch all counties on mount
   useEffect(() => {
@@ -109,14 +176,14 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.dataConsent) {
-      setError('You must consent to data processing');
+      setError(t.consentRequired || 'You must consent to data processing');
       return;
     }
     try {
       await register(formData);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(err.response?.data?.message || t.registrationFailed || 'Registration failed');
     }
   };
 
@@ -130,53 +197,53 @@ const Register = () => {
   return (
     <div className="container" style={{ maxWidth: 700, marginTop: '8rem' }}>
       <div className="card">
-        <h2 style={{ textAlign: 'center', color: '#1a237e', marginBottom: '1.5rem' }}>Register - Students & Teachers</h2>
+        <h2 style={{ textAlign: 'center', color: '#1a237e', marginBottom: '1.5rem' }}>{t.title}</h2>
         {error && <div style={{ background: '#ffebee', color: '#c62828', padding: '0.8rem', borderRadius: 8, marginBottom: '1rem' }}>{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="grid-2">
             <div className="form-group">
-              <label>Full Name</label>
+              <label>{t.fullName}</label>
               <input required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
             </div>
             <div className="form-group">
-              <label>Role</label>
+              <label>{t.role}</label>
               <select required value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })}>
-                <option value="student">Student</option>
-                <option value="teacher">Teacher</option>
+                <option value="student">{t.student}</option>
+                <option value="teacher">{t.teacher}</option>
               </select>
             </div>
           </div>
           <div className="grid-2">
             <div className="form-group">
-              <label>Email</label>
+              <label>{t.email}</label>
               <input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
             </div>
             <div className="form-group">
-              <label>Phone</label>
+              <label>{t.phone}</label>
               <input type="tel" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
             </div>
           </div>
           <div className="form-group">
-            <label>Password</label>
+            <label>{t.password}</label>
             <input type="password" required minLength="6" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
           </div>
 
-          <h3 style={{ marginTop: '1.5rem', color: '#1a237e' }}>Institution Details</h3>
+          <h3 style={{ marginTop: '1.5rem', color: '#1a237e' }}>{t.institutionDetails}</h3>
           <div className="grid-2">
             <div className="form-group">
-              <label>County</label>
+              <label>{t.county}</label>
               <select 
                 required 
                 value={formData.institution.county} 
                 onChange={(e) => updateInstitution('county', e.target.value)}
                 disabled={loading.counties}
               >
-                <option value="">{loading.counties ? 'Loading counties...' : 'Select County'}</option>
+                <option value="">{loading.counties ? t.loadingCounties : t.selectCounty}</option>
                 {counties.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label>Sub-County (Constituency)</label>
+              <label>{t.subCounty}</label>
               <select 
                 required 
                 disabled={!formData.institution.county || loading.constituencies} 
@@ -185,16 +252,16 @@ const Register = () => {
               >
                 <option value="">
                   {!formData.institution.county 
-                    ? 'Select a county first' 
+                    ? t.selectCountyFirst
                     : loading.constituencies 
-                      ? 'Loading sub-counties...' 
-                      : 'Select Sub-County'}
+                      ? t.loadingSubCounties
+                      : t.selectSubCounty}
                 </option>
                 {constituencies.map(sc => <option key={sc} value={sc}>{sc}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label>Ward</label>
+              <label>{t.ward}</label>
               <select 
                 required 
                 disabled={!formData.institution.subCounty || loading.wards} 
@@ -203,41 +270,40 @@ const Register = () => {
               >
                 <option value="">
                   {!formData.institution.subCounty 
-                    ? 'Select a sub-county first' 
+                    ? t.selectSubCountyFirst
                     : loading.wards 
-                      ? 'Loading wards...' 
-                      : 'Select Ward'}
+                      ? t.loadingWards
+                      : t.selectWard}
                 </option>
                 {wards.map(w => <option key={w} value={w}>{w}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label>Institution Level</label>
+              <label>{t.institutionLevel}</label>
               <select required value={formData.institution.level} onChange={(e) => updateInstitution('level', e.target.value)}>
-                <option value="">Select Level</option>
-                <option value="ecd">ECD (PP1-PP2)</option>
-                <option value="primary">Primary (Grade 1-6)</option>
-                <option value="jss">Junior Secondary (JSS)</option>
-                <option value="secondary">Senior Secondary (Form 1-4)</option>
-                <option value="tvet">TVET</option>
-                <option value="university">University</option>
+                <option value="">{t.selectLevel}</option>
+                <option value="ecd">{t.ecd}</option>
+                <option value="primary">{t.primary}</option>
+                <option value="jss">{t.jss}</option>
+                <option value="secondary">{t.secondary}</option>
+                <option value="tvet">{t.tvet}</option>
+                <option value="university">{t.university}</option>
               </select>
             </div>
           </div>
           
-          {/* Institution Name - Now a text input */}
           <div className="form-group">
-            <label>Institution Name</label>
+            <label>{t.institutionName}</label>
             <input 
               type="text"
               required 
               value={formData.institution.name} 
               onChange={(e) => updateInstitution('name', e.target.value)}
-              placeholder="Enter your school or institution name"
+              placeholder={t.institutionPlaceholder}
               style={{ width: '100%', padding: '0.8rem', border: '2px solid #ddd', borderRadius: '8px' }}
             />
             <small style={{ color: '#666', fontSize: '0.8rem', display: 'block', marginTop: '0.3rem' }}>
-              Type the full name of your school or institution
+              {t.institutionHelper}
             </small>
           </div>
 
@@ -245,15 +311,15 @@ const Register = () => {
             <label style={{ display: 'flex', alignItems: 'start', gap: '0.5rem', fontWeight: 'normal' }}>
               <input type="checkbox" required checked={formData.dataConsent} onChange={(e) => setFormData({ ...formData, dataConsent: e.target.checked })} style={{ width: 'auto', marginTop: '0.3rem' }} />
               <span style={{ fontSize: '0.9rem' }}>
-                I consent to the processing of my personal data in accordance with the <Link to="/privacy">Kenya Data Protection Act 2019</Link> and <Link to="/terms">Terms & Conditions</Link>.
+                {t.consent} <Link to="/privacy">{t.dataProtection}</Link> {t.terms && <Link to="/terms">{t.terms}</Link>}.
               </span>
             </label>
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}>Register</button>
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}>{t.registerButton}</button>
         </form>
         <p style={{ textAlign: 'center', marginTop: '1rem' }}>
-          Are you a <Link to="/register/tourist">Tourist</Link> or <Link to="/register/creator">Content Creator</Link>?
+          {t.touristLink} <Link to="/register/tourist">{t.tourist}</Link> {t.creatorLink} <Link to="/register/creator">{t.creator}</Link>
         </p>
       </div>
     </div>

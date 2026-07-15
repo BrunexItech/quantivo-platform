@@ -1,15 +1,91 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const { language, translateContent } = useLanguage();
   const [stats, setStats] = useState({});
   const [pendingTours, setPendingTours] = useState([]);
   const [allTours, setAllTours] = useState([]);
   const [users, setUsers] = useState([]);
-  const [activeTab, setActiveTab] = useState('pending'); // 'pending', 'all', 'users'
+  const [activeTab, setActiveTab] = useState('pending');
   const [editingTour, setEditingTour] = useState(null);
+  const [translatedTexts, setTranslatedTexts] = useState({});
+
+  const texts = {
+    title: '🛡️ Admin Dashboard',
+    totalUsers: 'Total Users',
+    activeTours: 'Active Tours',
+    pendingApproval: 'Pending Approval',
+    totalRevenue: 'Total Revenue',
+    pending: '📝 Pending',
+    allTours: '📋 All Tours',
+    users: '👥 Users',
+    pendingApprovalsTitle: '📝 Pending Tour Approvals',
+    noPending: 'No pending tours.',
+    by: 'By',
+    category: 'Category',
+    preview: 'Preview',
+    approve: 'Approve',
+    reject: 'Reject',
+    edit: 'Edit',
+    delete: 'Delete',
+    allToursTitle: '📋 All Tours',
+    titleCol: 'Title',
+    creatorCol: 'Creator',
+    statusCol: 'Status',
+    actionsCol: 'Actions',
+    usersTitle: '👥 All Users',
+    nameCol: 'Name',
+    emailCol: 'Email',
+    roleCol: 'Role',
+    joinedCol: 'Joined',
+    editTour: '✏️ Edit Tour',
+    saveChanges: '💾 Save Changes',
+    cancel: 'Cancel',
+    description: 'Description',
+    mediaType: 'Media Type',
+    mediaUrl: 'Media URL',
+    thumbnailUrl: 'Thumbnail URL',
+    price: 'Price (Ksh)',
+    status: 'Status',
+    pendingStatus: 'Pending',
+    approvedStatus: 'Approved',
+    rejectedStatus: 'Rejected',
+    deleteConfirm: 'Are you sure you want to delete this tour? This cannot be undone.',
+    tourApproved: '✅ Tour approved!',
+    tourRejected: '❌ Tour rejected.',
+    tourDeleted: '🗑️ Tour deleted.',
+    tourUpdated: '✅ Tour updated successfully!',
+    failedApprove: '❌ Failed to approve tour',
+    failedReject: '❌ Failed to reject tour',
+    failedDelete: '❌ Failed to delete tour',
+    failedUpdate: '❌ Failed to update tour',
+    adminNotes: 'Admin notes (optional):',
+    rejectReason: 'Reason for rejection:'
+  };
+
+  useEffect(() => {
+    const translateTexts = async () => {
+      if (language === 'en') {
+        setTranslatedTexts(texts);
+        return;
+      }
+
+      const translated = {};
+      for (const [key, value] of Object.entries(texts)) {
+        const result = await translateContent(value);
+        translated[key] = result;
+      }
+      setTranslatedTexts(translated);
+    };
+
+    translateTexts();
+  }, [language]);
+
+  const t = translatedTexts;
 
   useEffect(() => {
     loadData();
@@ -33,39 +109,39 @@ const AdminDashboard = () => {
   };
 
   const handleApprove = async (id) => {
-    const notes = prompt('Admin notes (optional):');
+    const notes = prompt(t.adminNotes);
     if (notes === null) return;
     try {
       await api.put(`/admin/tours/${id}/approve`, { notes });
       setPendingTours(pendingTours.filter(t => t._id !== id));
       loadData();
-      alert('✅ Tour approved!');
+      alert(t.tourApproved);
     } catch (err) {
-      alert('❌ Failed to approve tour');
+      alert(t.failedApprove);
     }
   };
 
   const handleReject = async (id) => {
-    const notes = prompt('Reason for rejection:');
+    const notes = prompt(t.rejectReason);
     if (notes === null) return;
     try {
       await api.put(`/admin/tours/${id}/reject`, { notes });
       setPendingTours(pendingTours.filter(t => t._id !== id));
       loadData();
-      alert('❌ Tour rejected.');
+      alert(t.tourRejected);
     } catch (err) {
-      alert('❌ Failed to reject tour');
+      alert(t.failedReject);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this tour? This cannot be undone.')) return;
+    if (!confirm(t.deleteConfirm)) return;
     try {
       await api.delete(`/admin/tours/${id}`);
       loadData();
-      alert('🗑️ Tour deleted.');
+      alert(t.tourDeleted);
     } catch (err) {
-      alert('❌ Failed to delete tour');
+      alert(t.failedDelete);
     }
   };
 
@@ -79,9 +155,9 @@ const AdminDashboard = () => {
       await api.put(`/admin/tours/${editingTour._id}/edit`, editingTour);
       setEditingTour(null);
       loadData();
-      alert('✅ Tour updated successfully!');
+      alert(t.tourUpdated);
     } catch (err) {
-      alert('❌ Failed to update tour');
+      alert(t.failedUpdate);
     }
   };
 
@@ -89,19 +165,15 @@ const AdminDashboard = () => {
     window.open(`/tours/${tourId}`, '_blank');
   };
 
-  const viewTourDetail = (tourId) => {
-    navigate(`/tours/${tourId}`);
-  };
-
   // ===== Edit Modal =====
   if (editingTour) {
     return (
       <div className="container" style={{ maxWidth: 800 }}>
-        <h2 style={{ color: '#1a237e' }}>✏️ Edit Tour</h2>
+        <h2 style={{ color: '#1a237e' }}>{t.editTour}</h2>
         <div className="card">
           <form onSubmit={handleEditSubmit}>
             <div className="form-group">
-              <label>Title</label>
+              <label>{t.titleCol}</label>
               <input
                 type="text"
                 value={editingTour.title || ''}
@@ -110,7 +182,7 @@ const AdminDashboard = () => {
               />
             </div>
             <div className="form-group">
-              <label>Description</label>
+              <label>{t.description}</label>
               <textarea
                 rows="4"
                 value={editingTour.description || ''}
@@ -120,7 +192,7 @@ const AdminDashboard = () => {
             </div>
             <div className="grid-2">
               <div className="form-group">
-                <label>Category</label>
+                <label>{t.category}</label>
                 <select
                   value={editingTour.category || 'wildlife'}
                   onChange={(e) => setEditingTour({ ...editingTour, category: e.target.value })}
@@ -134,7 +206,7 @@ const AdminDashboard = () => {
                 </select>
               </div>
               <div className="form-group">
-                <label>Media Type</label>
+                <label>{t.mediaType}</label>
                 <select
                   value={editingTour.mediaType || '360_image'}
                   onChange={(e) => setEditingTour({ ...editingTour, mediaType: e.target.value })}
@@ -145,7 +217,7 @@ const AdminDashboard = () => {
               </div>
             </div>
             <div className="form-group">
-              <label>Media URL</label>
+              <label>{t.mediaUrl}</label>
               <input
                 type="url"
                 value={editingTour.mediaUrl || ''}
@@ -154,7 +226,7 @@ const AdminDashboard = () => {
               />
             </div>
             <div className="form-group">
-              <label>Thumbnail URL</label>
+              <label>{t.thumbnailUrl}</label>
               <input
                 type="url"
                 value={editingTour.thumbnailUrl || ''}
@@ -164,7 +236,7 @@ const AdminDashboard = () => {
             </div>
             <div className="grid-2">
               <div className="form-group">
-                <label>Price (Ksh)</label>
+                <label>{t.price}</label>
                 <input
                   type="number"
                   value={editingTour.price?.ksh || 300}
@@ -175,26 +247,26 @@ const AdminDashboard = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Status</label>
+                <label>{t.status}</label>
                 <select
                   value={editingTour.status || 'pending'}
                   onChange={(e) => setEditingTour({ ...editingTour, status: e.target.value })}
                 >
-                  <option value="pending">Pending</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
+                  <option value="pending">{t.pendingStatus}</option>
+                  <option value="approved">{t.approvedStatus}</option>
+                  <option value="rejected">{t.rejectedStatus}</option>
                 </select>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-              <button type="submit" className="btn btn-primary">💾 Save Changes</button>
+              <button type="submit" className="btn btn-primary">{t.saveChanges}</button>
               <button
                 type="button"
                 onClick={() => setEditingTour(null)}
                 className="btn"
                 style={{ background: '#ddd' }}
               >
-                Cancel
+                {t.cancel}
               </button>
             </div>
           </form>
@@ -203,26 +275,34 @@ const AdminDashboard = () => {
     );
   }
 
+  // Helper function to translate status
+  const getStatusText = (status) => {
+    if (status === 'approved') return t.approvedStatus;
+    if (status === 'pending') return t.pendingStatus;
+    if (status === 'rejected') return t.rejectedStatus;
+    return status;
+  };
+
   return (
     <div className="container">
-      <h1 style={{ color: '#1a237e' }}>🛡️ Admin Dashboard</h1>
+      <h1 style={{ color: '#1a237e' }}>{t.title}</h1>
 
       {/* Stats Cards */}
       <div className="grid-4" style={{ marginTop: '2rem' }}>
         <div className="card" style={{ background: 'linear-gradient(135deg, #1e88e5, #42a5f5)', color: 'white' }}>
-          <h3>Total Users</h3>
+          <h3>{t.totalUsers}</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>{stats.totalUsers}</p>
         </div>
         <div className="card" style={{ background: 'linear-gradient(135deg, #43a047, #66bb6a)', color: 'white' }}>
-          <h3>Active Tours</h3>
+          <h3>{t.activeTours}</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>{stats.totalTours}</p>
         </div>
         <div className="card" style={{ background: 'linear-gradient(135deg, #ff6f00, #ffa726)', color: 'white' }}>
-          <h3>Pending Approval</h3>
+          <h3>{t.pendingApproval}</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>{stats.pendingTours}</p>
         </div>
         <div className="card" style={{ background: 'linear-gradient(135deg, #1a237e, #3949ab)', color: 'white' }}>
-          <h3>Total Revenue</h3>
+          <h3>{t.totalRevenue}</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>Ksh {stats.totalRevenue?.toLocaleString()}</p>
         </div>
       </div>
@@ -241,7 +321,7 @@ const AdminDashboard = () => {
             fontWeight: 'bold'
           }}
         >
-          📝 Pending ({pendingTours.length})
+          {t.pending} ({pendingTours.length})
         </button>
         <button
           onClick={() => setActiveTab('all')}
@@ -255,7 +335,7 @@ const AdminDashboard = () => {
             fontWeight: 'bold'
           }}
         >
-          📋 All Tours ({allTours.length})
+          {t.allTours} ({allTours.length})
         </button>
         <button
           onClick={() => setActiveTab('users')}
@@ -269,30 +349,30 @@ const AdminDashboard = () => {
             fontWeight: 'bold'
           }}
         >
-          👥 Users ({users.length})
+          {t.users} ({users.length})
         </button>
       </div>
 
       {/* ===== PENDING TOURS TAB ===== */}
       {activeTab === 'pending' && (
         <div className="card" style={{ marginTop: '2rem' }}>
-          <h2 style={{ color: '#1a237e', marginBottom: '1rem' }}>📝 Pending Tour Approvals</h2>
+          <h2 style={{ color: '#1a237e', marginBottom: '1rem' }}>{t.pendingApprovalsTitle}</h2>
           {pendingTours.length === 0 ? (
-            <p>No pending tours.</p>
+            <p>{t.noPending}</p>
           ) : (
             pendingTours.map(tour => (
               <div key={tour._id} style={{ padding: '1rem', borderBottom: '1px solid #ddd', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                 <div style={{ flex: 1, minWidth: '200px' }}>
                   <h3>{tour.title}</h3>
-                  <p style={{ fontSize: '0.9rem', color: '#666' }}>By: {tour.createdBy?.name} | Category: {tour.category}</p>
+                  <p style={{ fontSize: '0.9rem', color: '#666' }}>{t.by}: {tour.createdBy?.name} | {t.category}: {tour.category}</p>
                   <p style={{ fontSize: '0.85rem' }}>{tour.description?.substring(0, 100)}...</p>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <button onClick={() => handlePreview(tour._id)} className="btn" style={{ padding: '0.5rem 1rem', background: '#1e88e5', color: 'white' }}>👁️ Preview</button>
-                  <button onClick={() => handleApprove(tour._id)} className="btn btn-success" style={{ padding: '0.5rem 1rem' }}>✅ Approve</button>
-                  <button onClick={() => handleReject(tour._id)} className="btn" style={{ padding: '0.5rem 1rem', background: '#f44336', color: 'white' }}>❌ Reject</button>
-                  <button onClick={() => handleEdit(tour)} className="btn" style={{ padding: '0.5rem 1rem', background: '#ff6f00', color: 'white' }}>✏️ Edit</button>
-                  <button onClick={() => handleDelete(tour._id)} className="btn" style={{ padding: '0.5rem 1rem', background: '#880e4f', color: 'white' }}>🗑️ Delete</button>
+                  <button onClick={() => handlePreview(tour._id)} className="btn" style={{ padding: '0.5rem 1rem', background: '#1e88e5', color: 'white' }}>👁️ {t.preview}</button>
+                  <button onClick={() => handleApprove(tour._id)} className="btn btn-success" style={{ padding: '0.5rem 1rem' }}>✅ {t.approve}</button>
+                  <button onClick={() => handleReject(tour._id)} className="btn" style={{ padding: '0.5rem 1rem', background: '#f44336', color: 'white' }}>❌ {t.reject}</button>
+                  <button onClick={() => handleEdit(tour)} className="btn" style={{ padding: '0.5rem 1rem', background: '#ff6f00', color: 'white' }}>✏️ {t.edit}</button>
+                  <button onClick={() => handleDelete(tour._id)} className="btn" style={{ padding: '0.5rem 1rem', background: '#880e4f', color: 'white' }}>🗑️ {t.delete}</button>
                 </div>
               </div>
             ))
@@ -303,15 +383,15 @@ const AdminDashboard = () => {
       {/* ===== ALL TOURS TAB ===== */}
       {activeTab === 'all' && (
         <div className="card" style={{ marginTop: '2rem' }}>
-          <h2 style={{ color: '#1a237e', marginBottom: '1rem' }}>📋 All Tours</h2>
+          <h2 style={{ color: '#1a237e', marginBottom: '1rem' }}>{t.allToursTitle}</h2>
           <div className="table-responsive">
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: '#e3f2fd' }}>
-                  <th style={{ padding: '0.8rem', textAlign: 'left' }}>Title</th>
-                  <th style={{ padding: '0.8rem', textAlign: 'left' }}>Creator</th>
-                  <th style={{ padding: '0.8rem', textAlign: 'left' }}>Status</th>
-                  <th style={{ padding: '0.8rem', textAlign: 'left' }}>Actions</th>
+                  <th style={{ padding: '0.8rem', textAlign: 'left' }}>{t.titleCol}</th>
+                  <th style={{ padding: '0.8rem', textAlign: 'left' }}>{t.creatorCol}</th>
+                  <th style={{ padding: '0.8rem', textAlign: 'left' }}>{t.statusCol}</th>
+                  <th style={{ padding: '0.8rem', textAlign: 'left' }}>{t.actionsCol}</th>
                 </tr>
               </thead>
               <tbody>
@@ -326,7 +406,7 @@ const AdminDashboard = () => {
                         fontSize: '0.85rem',
                         background: tour.status === 'approved' ? '#c8e6c9' : tour.status === 'pending' ? '#fff3e0' : '#ffcdd2'
                       }}>
-                        {tour.status}
+                        {getStatusText(tour.status)}
                       </span>
                     </td>
                     <td style={{ padding: '0.8rem' }}>
@@ -347,15 +427,15 @@ const AdminDashboard = () => {
       {/* ===== USERS TAB ===== */}
       {activeTab === 'users' && (
         <div className="card" style={{ marginTop: '2rem' }}>
-          <h2 style={{ color: '#1a237e', marginBottom: '1rem' }}>👥 All Users</h2>
+          <h2 style={{ color: '#1a237e', marginBottom: '1rem' }}>{t.usersTitle}</h2>
           <div className="table-responsive">
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: '#e3f2fd' }}>
-                  <th style={{ padding: '0.8rem', textAlign: 'left' }}>Name</th>
-                  <th style={{ padding: '0.8rem', textAlign: 'left' }}>Email</th>
-                  <th style={{ padding: '0.8rem', textAlign: 'left' }}>Role</th>
-                  <th style={{ padding: '0.8rem', textAlign: 'left' }}>Joined</th>
+                  <th style={{ padding: '0.8rem', textAlign: 'left' }}>{t.nameCol}</th>
+                  <th style={{ padding: '0.8rem', textAlign: 'left' }}>{t.emailCol}</th>
+                  <th style={{ padding: '0.8rem', textAlign: 'left' }}>{t.roleCol}</th>
+                  <th style={{ padding: '0.8rem', textAlign: 'left' }}>{t.joinedCol}</th>
                 </tr>
               </thead>
               <tbody>

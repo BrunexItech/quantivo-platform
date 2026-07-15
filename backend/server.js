@@ -14,6 +14,7 @@ const paymentRoutes = require('./routes/payments');
 const userRoutes = require('./routes/users');
 const adminRoutes = require('./routes/admin');
 const creatorRoutes = require('./routes/creators');
+const chatRoutes = require('./routes/chat'); // <-- ADDED
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -110,6 +111,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/creators', creatorRoutes);
+app.use('/api/chat', chatRoutes); // <-- ADDED
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
