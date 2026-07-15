@@ -12,24 +12,24 @@ const seedDatabase = async () => {
     // Clear existing data
     await User.deleteMany({});
     await Tour.deleteMany({});
-    console.log('🗑️  Cleared existing data');
+    console.log('🗑️ Cleared existing data');
 
-    // Create admin user - DO NOT HASH, let the model do it
+    // Create admin user
     const admin = await User.create({
       name: 'Quantivo',
       email: 'quantivo.itech@gmail.com',
-      password: '@Quantivo@#',  // Plain password, model will hash
+      password: '@Quantivo@#',
       role: 'admin',
       isActive: true,
       dataConsent: true
     });
     console.log('✅ Admin user created');
 
-    // Create sample content creator - DO NOT HASH, let the model do it
+    // Create sample content creator
     const creator = await User.create({
       name: 'Sample Creator',
       email: 'creator@quantivo.co.ke',
-      password: 'Creator123!',  // Plain password, model will hash
+      password: 'Creator123!',
       phone: '0712345678',
       role: 'content_creator',
       creatorProfile: {
@@ -51,8 +51,17 @@ const seedDatabase = async () => {
         category: 'wildlife',
         mediaType: '360_video',
         mediaUrl: 'https://example.com/maasai-mara-360.mp4',
-        location: { county: 'Narok', subCounty: 'Kilgoris', ward: 'Mara' },
-        price: { ksh: 300, usd: 2.31, eur: 2.13, jpy: 345 },
+        location: {
+          county: 'Narok',
+          subCounty: 'Kilgoris',
+          ward: 'Mara'
+        },
+        price: {
+          ksh: 300,
+          usd: 2.31,
+          eur: 2.13,
+          jpy: 345
+        },
         createdBy: creator._id,
         creatorName: creator.name,
         status: 'approved',
@@ -60,12 +69,21 @@ const seedDatabase = async () => {
       },
       {
         title: 'Nairobi National Museum',
-        description: 'Explore Kenya\'s rich history, culture, and paleontology exhibits.',
+        description: "Explore Kenya's rich history, culture, and paleontology exhibits.",
         category: 'history',
         mediaType: '360_image',
         mediaUrl: 'https://example.com/nairobi-museum.jpg',
-        location: { county: 'Nairobi', subCounty: 'Nairobi Central', ward: 'Nairobi Central' },
-        price: { ksh: 300, usd: 2.31, eur: 2.13, jpy: 345 },
+        location: {
+          county: 'Nairobi',
+          subCounty: 'Nairobi Central',
+          ward: 'Nairobi Central'
+        },
+        price: {
+          ksh: 300,
+          usd: 2.31,
+          eur: 2.13,
+          jpy: 345
+        },
         createdBy: creator._id,
         creatorName: creator.name,
         status: 'approved',
@@ -77,8 +95,17 @@ const seedDatabase = async () => {
         category: 'geography',
         mediaType: '360_video',
         mediaUrl: 'https://example.com/lake-turkana.mp4',
-        location: { county: 'Turkana', subCounty: 'Turkana Central', ward: 'Lodwar' },
-        price: { ksh: 300, usd: 2.31, eur: 2.13, jpy: 345 },
+        location: {
+          county: 'Turkana',
+          subCounty: 'Turkana Central',
+          ward: 'Lodwar'
+        },
+        price: {
+          ksh: 300,
+          usd: 2.31,
+          eur: 2.13,
+          jpy: 345
+        },
         createdBy: creator._id,
         creatorName: creator.name,
         status: 'approved',
@@ -86,21 +113,26 @@ const seedDatabase = async () => {
       }
     ];
 
-    await Tour.create(sampleTours);
+    await Tour.insertMany(sampleTours);
     console.log(`✅ ${sampleTours.length} sample tours created`);
 
-    console.log('\n🎉 Database seeded successfully!');
-    console.log('\n👤 Admin:');
+    console.log('\n🎉 Database seeded successfully!\n');
+
+    console.log('👤 Admin');
     console.log('   Email: quantivo.itech@gmail.com');
-    console.log('   Password: @Quantivo@#');
-    console.log('\n👤 Sample Creator:');
+    console.log('   Password: @Quantivo@#\n');
+
+    console.log('👤 Sample Creator');
     console.log('   Email: creator@quantivo.co.ke');
     console.log('   Password: Creator123!');
-
-    process.exit(0);
   } catch (error) {
     console.error('❌ Seeding error:', error);
-    process.exit(1);
+    process.exitCode = 1;
+  } finally {
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+      console.log('🔌 Disconnected from MongoDB');
+    }
   }
 };
 
