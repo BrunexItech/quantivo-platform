@@ -1,10 +1,8 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const User = require('../models/User');
 const Tour = require('../models/Tour');
-const kenyaLocations = require('./kenyaLocations');
 
 const seedDatabase = async () => {
   try {
@@ -16,24 +14,22 @@ const seedDatabase = async () => {
     await Tour.deleteMany({});
     console.log('🗑️  Cleared existing data');
 
-    // Create admin user (YOUR CUSTOM CREDENTIALS)
-    const adminPassword = await bcrypt.hash('@Quantivo@#', 10);
+    // Create admin user - DO NOT HASH, let the model do it
     const admin = await User.create({
       name: 'Quantivo',
       email: 'quantivo.itech@gmail.com',
-      password: adminPassword,
+      password: '@Quantivo@#',  // Plain password, model will hash
       role: 'admin',
       isActive: true,
       dataConsent: true
     });
     console.log('✅ Admin user created');
 
-    // Create sample content creator
-    const creatorPassword = await bcrypt.hash('Creator123!', 10);
+    // Create sample content creator - DO NOT HASH, let the model do it
     const creator = await User.create({
       name: 'Sample Creator',
       email: 'creator@quantivo.co.ke',
-      password: creatorPassword,
+      password: 'Creator123!',  // Plain password, model will hash
       phone: '0712345678',
       role: 'content_creator',
       creatorProfile: {
