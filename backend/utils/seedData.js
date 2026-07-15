@@ -9,41 +9,61 @@ const seedDatabase = async () => {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('📦 Connected to MongoDB');
 
-    // Clear existing data
-    await User.deleteMany({});
-    await Tour.deleteMany({});
-    console.log('🗑️ Cleared existing data');
-
-    // Create admin user
-    const admin = await User.create({
-      name: 'Quantivo',
-      email: 'quantivo.itech@gmail.com',
-      password: '@Quantivo@#',
-      role: 'admin',
-      isActive: true,
-      dataConsent: true
+    // ============================
+    // Create admin if it doesn't exist
+    // ============================
+    let admin = await User.findOne({
+      email: 'quantivo.itech@gmail.com'
     });
-    console.log('✅ Admin user created');
 
-    // Create sample content creator
-    const creator = await User.create({
-      name: 'Sample Creator',
-      email: 'creator@quantivo.co.ke',
-      password: 'Creator123!',
-      phone: '0712345678',
-      role: 'content_creator',
-      creatorProfile: {
-        bio: 'Experienced virtual tour creator',
-        mpesaNumber: '0712345678',
-        totalEarnings: 0,
-        pendingEarnings: 0,
-        revenueSharePercentage: 70
-      },
-      dataConsent: true
+    if (!admin) {
+      admin = await User.create({
+        name: 'Quantivo',
+        email: 'quantivo.itech@gmail.com',
+        password: '@Quantivo@#',
+        role: 'admin',
+        isActive: true,
+        dataConsent: true
+      });
+
+      console.log('✅ Admin user created');
+    } else {
+      console.log('ℹ️ Admin already exists');
+    }
+
+    // ============================
+    // Create sample creator
+    // ============================
+    let creator = await User.findOne({
+      email: 'creator@quantivo.co.ke'
     });
-    console.log('✅ Sample creator created');
 
-    // Create sample tours
+    if (!creator) {
+      creator = await User.create({
+        name: 'Sample Creator',
+        email: 'creator@quantivo.co.ke',
+        password: 'Creator123!',
+        phone: '0712345678',
+        role: 'content_creator',
+        creatorProfile: {
+          bio: 'Experienced virtual tour creator',
+          mpesaNumber: '0712345678',
+          totalEarnings: 0,
+          pendingEarnings: 0,
+          revenueSharePercentage: 70
+        },
+        dataConsent: true
+      });
+
+      console.log('✅ Sample creator created');
+    } else {
+      console.log('ℹ️ Sample creator already exists');
+    }
+
+    // ============================
+    // Sample tours
+    // ============================
+
     const sampleTours = [
       {
         title: 'Maasai Mara Wildlife Safari',
@@ -113,18 +133,21 @@ const seedDatabase = async () => {
       }
     ];
 
-    await Tour.insertMany(sampleTours);
-    console.log(`✅ ${sampleTours.length} sample tours created`);
+    let createdTours = 0;
 
-    console.log('\n🎉 Database seeded successfully!\n');
+    for (const tour of sampleTours) {
+      const exists = await Tour.findOne({ title: tour.title });
 
-    console.log('👤 Admin');
-    console.log('   Email: quantivo.itech@gmail.com');
-    console.log('   Password: @Quantivo@#\n');
+      if (!exists) {
+        await Tour.create(tour);
+        createdTours++;
+      }
+    }
 
-    console.log('👤 Sample Creator');
-    console.log('   Email: creator@quantivo.co.ke');
-    console.log('   Password: Creator123!');
+    console.log(`✅ ${createdTours} sample tours added`);
+
+    console.log('\n🎉 Database initialization complete!');
+
   } catch (error) {
     console.error('❌ Seeding error:', error);
     process.exitCode = 1;
