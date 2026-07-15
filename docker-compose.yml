@@ -3,39 +3,39 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    container_name: quantivo-backend
+    container_name: quantivo-vr-backend
     ports:
       - "5002:5000"
     environment:
       - NODE_ENV=production
-      - MONGODB_URI=mongodb://quantivo-mongo:27017/quantivo
+      - MONGODB_URI=mongodb://quantivo-vr-mongo:27017/quantivo
     env_file:
       - ./backend/.env
     volumes:
       - ./backend/uploads:/app/uploads
     depends_on:
-      - quantivo-mongo
+      - quantivo-vr-mongo
     restart: unless-stopped
 
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
-    container_name: quantivo-frontend
+    container_name: quantivo-vr-frontend
     ports:
       - "8088:80"
     depends_on:
       - backend
     restart: unless-stopped
 
-  quantivo-mongo:
+  quantivo-vr-mongo:
     image: mongo:7
-    container_name: quantivo-mongo
+    container_name: quantivo-vr-mongo
     volumes:
-      - mongo-data:/data/db
+      - mongo-data-vr:/data/db
     ports:
       - "27017:27017"
     restart: unless-stopped
 
 volumes:
-  mongo-data:
+  mongo-data-vr:
