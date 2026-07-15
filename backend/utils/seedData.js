@@ -16,11 +16,11 @@ const seedDatabase = async () => {
     await Tour.deleteMany({});
     console.log('🗑️  Cleared existing data');
 
-    // Create admin user
-    const adminPassword = await bcrypt.hash('Admin123!', 10);
+    // Create admin user (YOUR CUSTOM CREDENTIALS)
+    const adminPassword = await bcrypt.hash('@Quantivo@#', 10);
     const admin = await User.create({
-      name: 'Admin User',
-      email: 'admin@quantivo.co.ke',
+      name: 'Quantivo',
+      email: 'quantivo.itech@gmail.com',
       password: adminPassword,
       role: 'admin',
       isActive: true,
@@ -94,9 +94,9 @@ const seedDatabase = async () => {
     console.log(`✅ ${sampleTours.length} sample tours created`);
 
     console.log('\n🎉 Database seeded successfully!');
-    console.log('\n👤 Default Admin:');
-    console.log('   Email: admin@quantivo.co.ke');
-    console.log('   Password: Admin123!');
+    console.log('\n👤 Admin:');
+    console.log('   Email: quantivo.itech@gmail.com');
+    console.log('   Password: @Quantivo@#');
     console.log('\n👤 Sample Creator:');
     console.log('   Email: creator@quantivo.co.ke');
     console.log('   Password: Creator123!');
